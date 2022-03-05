@@ -84,6 +84,17 @@ var dealOneCard = function (deck) {
   return card;
 };
 
+var determineBlackjack = function (card1, card2) {
+  if (
+    (card1 == "ace" &&
+      (card2 == "jack" || card2 == "queen" || card2 == "king")) ||
+    (card2 == "ace" && (card1 == "jack" || card1 == "queen" || card1 == "king"))
+  ) {
+    var isItBlackjack = true;
+  }
+  return isItBlackjack;
+};
+
 var calculateComSum = function (comCards) {
   counter = 0;
   comSum = 0;
@@ -108,50 +119,67 @@ var calculatePlayerSum = function (playerCards) {
 // else if player choose to hit or stand
 var main = function (input) {
   var myOutputValue = "";
+  var playerDrawnCards = "";
+  var comDrawnCards = "";
+
   if (gameMode == DEALCARDS) {
     var mixedDeck = shuffleDeck(deck);
     var playerCard1 = dealOneCard(deck);
     var comCard1 = dealOneCard(deck);
     var playerCard2 = dealOneCard(deck);
     var comCard2 = dealOneCard(deck);
+    // playerCard1 = { name: "ace", suits: "diamonds", rank: 1 };
+    // playerCard2 = { name: "jack", suits: "diamonds", rank: 10 };
+    // comCard1 = { name: "ace", suits: "diamonds", rank: 1 };
+    // comCard2 = { name: "queen", suits: "diamonds", rank: 10 };
     playerCards.push(playerCard1, playerCard2);
     comCards.push(comCard1, comCard2);
     playerSum = calculatePlayerSum(playerCards);
+    var playerBlackjack = determineBlackjack(
+      playerCards[0].name,
+      playerCards[1].name
+    );
+    var comBlackjack = determineBlackjack(comCards[0].name, comCards[1].name);
     console.log(mixedDeck);
     console.log("player cards " + playerCards[0].name + playerCards[0].suits);
     console.log("player cards " + playerCards[1].name + playerCards[1].suits);
     console.log("Computer cards " + comCards[0].name + comCards[0].suits);
     console.log("Computer cards " + comCards[1].name + comCards[1].suits);
     gameMode = PLAYERTURN;
-    myOutputValue = `Hello there! <br>
-      You have drawn: <br><br>
+
+    playerDrawnCards = `You have drawn: <br><br>
       ${playerCards[0].name} of ${playerCards[0].suits} <br>
-      ${playerCards[1].name} of ${playerCards[1].suits} <br><br>
+      ${playerCards[1].name} of ${playerCards[1].suits} <br><br>`;
+    comDrawnCards = `The computer has drawn: <br><br>
+      ${comCards[0].name} of ${comCards[0].suits} <br>
+      ${comCards[1].name} of ${comCards[1].suits} <br><br>`;
+
+    myOutputValue = `Hello there! <br>
+      ${playerDrawnCards}
       The total sum of your cards is ${playerSum} <br>
       Please enter 'hit' to draw a card or 'stand' to end your turn`;
-    if (
-      (playerCards[0].name == "ace" &&
-        (playerCards[1].name == "jack" ||
-          playerCards[1].name == "queen" ||
-          playerCards[1].name == "king")) ||
-      (playerCards[1].name == "ace" &&
-        (playerCards[0].name == "jack" ||
-          playerCards[0].name == "queen" ||
-          playerCards[0].name == "king"))
-    ) {
-      myOutputValue = "Blackjack! Player wins";
+
+    if (playerBlackjack == true && comBlackjack == true) {
+      gameMode = DEALCARDS;
+      myOutputValue =
+        playerDrawnCards +
+        comDrawnCards +
+        `It's a draw! Both the computer and you have drawn Blackjack!<br> 
+      Click on 'submit' to play another round.`;
       return myOutputValue;
-    } else if (
-      (comCards[0].name == "ace" &&
-        (comCards[1].name == "jack" ||
-          comCards[1].name == "queen" ||
-          comCards[1].name == "king")) ||
-      (comCards[1].name == "ace" &&
-        (comCards[0].name == "jack" ||
-          comCards[0].name == "queen" ||
-          comCards[0].name == "king"))
-    ) {
-      myOutputValue = "Blackjack! Computer wins";
+    } else if (playerBlackjack == true) {
+      gameMode = DEALCARDS;
+      myOutputValue = `Hello there! <br>
+        ${playerDrawnCards}
+        Blackjack! You win!<br>
+      Click on 'submit' to play another round.`;
+      return myOutputValue;
+    } else if (comBlackjack == true) {
+      gameMode = DEALCARDS;
+      myOutputValue = `Hello there! <br>
+        ${comDrawnCards}
+      You lost! Computer got Blackjack!<br> 
+      Click on 'submit' to play another round.`;
       return myOutputValue;
     }
   } else if (gameMode == PLAYERTURN) {
