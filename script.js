@@ -29,9 +29,12 @@ var PLAYERTURN = "player turn";
 var COMTURN = "com turn";
 var DETERMINEWINNER = "determine winner";
 var playerCards = [];
+var playerCardsAce11 = [];
 var comCards = [];
 var comSum = 0;
-var playerSum = 0;
+var playerSumAce01 = 0;
+var playerSumAce11 = 0;
+var playerFinalSum = 0;
 var playerDrawnCards = "";
 var comDrawnCards = "";
 
@@ -45,6 +48,7 @@ var makeDeck = function () {
       cardRank = cardCounter;
       if (cardCounter == 1) {
         cardName = "ace";
+        cardRank = 1;
       } else if (cardCounter == 11) {
         cardName = "jack";
         cardRank = 10;
@@ -99,26 +103,14 @@ var dealOneCard = function (deck) {
 var determineBlackjack = function (card1, card2) {
   if (
     (card1 == "ace" &&
-      (card2 == "ace" ||
-        card2 == "jack" ||
-        card2 == "queen" ||
-        card2 == "king")) ||
-    (card2 == "ace" &&
-      (card1 == "ace" ||
-        card1 == "jack" ||
-        card1 == "queen" ||
-        card1 == "king"))
+      (card2 == "jack" || card2 == "queen" || card2 == "king")) ||
+    (card2 == "ace" && (card1 == "jack" || card1 == "queen" || card1 == "king"))
   ) {
     var isItBlackjack = true;
   } else {
     isItBlackjack = false;
   }
   return isItBlackjack;
-};
-
-var determineAce01Or11 = function (cardNumber) {
-  playerCards[cardNumber].rank = 11;
-  return playerCards;
 };
 
 // Ace can be 1 or 11
@@ -132,14 +124,56 @@ var calculateComSum = function (comCards) {
   return comSum;
 };
 
-var calculatePlayerSum = function (playerCards) {
+var checkForAce = function (playerCards) {
   counter = 0;
-  playerSum = 0;
   while (counter < playerCards.length) {
-    playerSum = playerSum + playerCards[counter].rank;
+    if (playerCards[counter].name == "ace") {
+      var isThereAce = true;
+    }
     counter = counter + 1;
   }
-  return playerSum;
+  return isThereAce;
+};
+
+var calculatePlayerSumAce01 = function (playerCards) {
+  counter = 0;
+  playerSumAce01 = 0;
+  while (counter < playerCards.length) {
+    if (playerCards[counter].name == "ace") {
+      playerCards[counter].rank = 1;
+    }
+    playerSumAce01 = playerSumAce01 + playerCards[counter].rank;
+    counter = counter + 1;
+  }
+  return playerSumAce01;
+};
+
+// var changeAceValue = function (playerCard) {
+//   if (playerCard.name == "ace") {
+//     playerCard.rank = 11;
+//   }
+//   return playerCard;
+// };
+
+var calculatePlayerSumAce11 = function (playerCards) {
+  if (playerCards[0].name == "ace") {
+    playerCards[0].rank = 11;
+  } else if (playerCards[0].name != "ace" && playerCards[1].name == "ace") {
+    playerCards[1].rank = 11;
+  } else if (
+    playerCards[0].name != "ace" &&
+    playerCards[1].name != "ace" &&
+    playerCards[2].name == "ace"
+  ) {
+    playerCards[2].rank = 11;
+  }
+  counter = 0;
+  playerSumAce11 = 0;
+  while (counter < playerCards.length) {
+    playerSumAce11 = playerSumAce11 + playerCards[counter].rank;
+    counter = counter + 1;
+  }
+  return playerSumAce11;
 };
 
 // if player or computer gets blackjack, game ends.
@@ -153,13 +187,16 @@ var main = function (input) {
     var comCard1 = dealOneCard(deck);
     var playerCard2 = dealOneCard(deck);
     var comCard2 = dealOneCard(deck);
-    // playerCard1 = { name: "ace", suits: "diamonds", rank: 1 };
+
+    playerCard1 = { name: "ace", suits: "diamonds", rank: 1 };
     // playerCard2 = { name: "jack", suits: "diamonds", rank: 10 };
     // comCard1 = { name: "7", suits: "diamonds", rank: 7 };
     // comCard2 = { name: "queen", suits: "diamonds", rank: 10 };
+
     playerCards.push(playerCard1, playerCard2);
     comCards.push(comCard1, comCard2);
-    playerSum = calculatePlayerSum(playerCards);
+    var playerCardsAceCheck = checkForAce(playerCards);
+    playerSumAce01 = calculatePlayerSumAce01(playerCards);
 
     var playerBlackjack = determineBlackjack(
       playerCards[0].name,
@@ -171,6 +208,7 @@ var main = function (input) {
     console.log("player card 2 " + playerCards[1].name + playerCards[1].suits);
     console.log("Computer card 1 " + comCards[0].name + comCards[0].suits);
     console.log("Computer card 2 " + comCards[1].name + comCards[1].suits);
+
     gameMode = PLAYERTURN;
 
     playerDrawnCards = `You have drawn: <br>
@@ -182,7 +220,7 @@ var main = function (input) {
 
     myOutputValue = `Hello there!
       ${playerDrawnCards}<br>
-      The total sum of your cards is ${playerSum} <br>
+      The total sum of your cards is ${playerSumAce01} <br>
       Please enter 'hit' to draw a card or 'stand' to end your turn`;
 
     if (playerBlackjack == true && comBlackjack == true) {
@@ -207,43 +245,35 @@ var main = function (input) {
       You lost! Computer got Blackjack!<br> 
       Click on 'submit' to play another round.`;
       return myOutputValue;
-    } else if (playerCards[0].name == "ace" || playerCards[1].name == "ace") {
-      gameMode = DETERMINEPLAYERACE;
-      myOutputValue = `Hello there! <br>
+    } else if (playerCardsAceCheck == true) {
+      playerSumAce11 = calculatePlayerSumAce11(playerCards);
+      myOutputValue = `Hello there!
       ${playerDrawnCards} <br>
-      You may choose for your ace to be equals to 1 or 11. Please enter the ace card number '1' or '2' to be equal to 11.`;
+      The total sum of your cards is ${playerSumAce01} or ${playerSumAce11}<br>
+      Please enter 'hit' to draw a card or 'stand' to end your turn`;
     }
-  } else if (gameMode == DETERMINEPLAYERACE) {
-    var index = input - 1;
-    if (playerCards[index].name != "ace") {
-      return `The indicated card number is not an ace. Please enter the card number of the ace to be counted as 11`;
-    } else if (playerCards[index].name == "ace") {
-      var playerHandAce11 = determineAce01Or11(index);
-      playerSum = calculatePlayerSum(playerHandAce11);
-      gameMode = PLAYERTURN;
-      myOutputValue = `The total sum of your cards is ${playerSum} <br>
-    Please enter 'hit' to draw a card or 'stand' to end your turn`;
-    } else return myOutputValue;
   } else if (gameMode == PLAYERTURN) {
     if (input == `hit`) {
       var playerCard3 = dealOneCard(deck);
       // playerCard3 = { name: "ace", suits: "diamonds", rank: 1 };
       playerCards.push(playerCard3);
+      playerSumAce01 = calculatePlayerSumAce01(playerCards);
+      console.log("playerSumAce01 " + playerSumAce01);
+      console.log("playerSumAce11 " + playerSumAce11);
+
+      var playerCardsAceCheck = checkForAce(playerCards);
       playerDrawnCards =
         playerDrawnCards +
         `Card 3: ${playerCard3.name} of ${playerCard3.suits}<br>`;
-      if (playerCard3.name == "ace") {
-        gameMode = DETERMINEPLAYERACE;
-        myOutputValue = `Your next card is: <br>
-      ${playerCard3.name} of ${playerCard3.suits}<br><br> ${playerDrawnCards}<br> 
-      Please enter the ace card number to be counted as 11`;
-      } else if (playerCard3.name != "ace") {
-        playerSum = calculatePlayerSum(playerCards);
-        console.log("playerSum " + playerSum);
-        myOutputValue = `Your third card is:<br>
+      myOutputValue = `Your third card is:<br>
       ${playerCard3.name} of ${playerCard3.suits}<br><br> ${playerDrawnCards} <br>
-      The total sum of your cards is ${playerSum}. <br>
+      The total sum of your cards is ${playerSumAce01}. <br>
       Please enter 'hit' to draw another card or 'stand' to end your turn.`;
+      if (playerCardsAceCheck == true) {
+        playerSumAce11 = calculatePlayerSumAce11(playerCards);
+        myOutputValue = `${playerDrawnCards} <br>
+      The total sum of your cards is ${playerSumAce01} or ${playerSumAce11}<br>
+      Please enter 'hit' to draw a card or 'stand' to end your turn`;
       }
     } else if (input == `stand`) {
       gameMode = COMTURN;
@@ -268,26 +298,37 @@ var main = function (input) {
       myOutputValue = `The computer stands. Please click 'submit' again to view the results.`;
     }
   } else if (gameMode == DETERMINEWINNER) {
-    if (comSum > 21 && playerSum > 21) {
-      myOutputValue = `Draw!<br>
+    if (playerSumAce11 > 21) {
+      playerFinalSum = playerSumAce01;
+    } else if (playerSumAce11 <= 21) {
+      playerFinalSum = playerSumAce11;
+    }
+    if (comSum > 21 && playerFinalSum > 21) {
+      myOutputValue = `Draw!<br><br>
       ${playerDrawnCards} ${comDrawnCards}
       Both of you busted!`;
-    }
-    if (comSum > 21) {
-      myOutputValue = `The computer busted!`;
-    } else if (playerSum > 21) {
-      myOutputValue = `You lose!`;
-    } else if (comSum < playerSum) {
-      myOutputValue = `You win!<br>
-      The computer has drawn a total sum of ${comSum}<br>
-      and you have drawn a total sum of ${playerSum}<br>`;
-    } else if (comSum > playerSum) {
-      myOutputValue = `The computer wins!<br>
-      The computer has drawn a total sum of ${comSum}<br>
-      and you have drawn a total sum of ${playerSum}<br>`;
-    } else if (comSum == playerSum) {
+    } else if (comSum > 21) {
+      myOutputValue = `The computer busted!<br><br>
+      ${playerDrawnCards} ${comDrawnCards}`;
+    } else if (playerFinalSum > 21) {
+      myOutputValue = `You lose!<br><br>
+       ${playerDrawnCards} ${comDrawnCards}`;
+    } else if (comSum < playerFinalSum) {
+      myOutputValue = `You win!<br><br>
+      ${comDrawnCards}
+      Its total sum is ${comSum}<br><br>
+       ${playerDrawnCards}
+      Your total sum is ${playerFinalSum}`;
+    } else if (comSum > playerFinalSum) {
+      myOutputValue = `The computer wins!<br><br>
+      ${comDrawnCards}
+      Its total sum is ${comSum}<br><br>
+       ${playerDrawnCards}
+      Your total sum is ${playerFinalSum}`;
+    } else if (comSum == playerFinalSum) {
       myOutputValue = `Draw!<br>
-      Both the computer and you have drawn ${playerSum}!<br><br>
+      ${playerDrawnCards} ${comDrawnCards}
+      Both the computer and you have drawn ${playerFinalSum}!<br><br>
       Click 'submit' to start playing another round of blackjack.`;
     }
     gameMode = DEALCARDS;
