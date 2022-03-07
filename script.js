@@ -130,40 +130,20 @@ var calculateSumAce01 = function (cards) {
   counter = 0;
   var sumAce01 = 0;
   while (counter < cards.length) {
-    if (cards[counter].name == "ace") {
-      cards[counter].rank = 1;
-    }
     sumAce01 = sumAce01 + cards[counter].rank;
     counter = counter + 1;
   }
   return sumAce01;
 };
 
-// var changeAceValue = function (playerCard) {
-//   if (playerCard.name == "ace") {
-//     playerCard.rank = 11;
-//   }
-//   return playerCard;
-// };
-
 var calculateSumAce11 = function (cards) {
-  if (cards[0].name == "ace") {
-    cards[0].rank = 11;
-  } else if (cards[0].name != "ace" && cards[1].name == "ace") {
-    cards[1].rank = 11;
-  } else if (
-    cards[0].name != "ace" &&
-    cards[1].name != "ace" &&
-    cards[2].name == "ace"
-  ) {
-    cards[2].rank = 11;
-  }
   counter = 0;
   var sumAce11 = 0;
   while (counter < cards.length) {
     sumAce11 = sumAce11 + cards[counter].rank;
     counter = counter + 1;
   }
+  sumAce11 = sumAce11 + 10;
   return sumAce11;
 };
 
@@ -174,6 +154,30 @@ var determineFinalSum = function (sumAce01, sumAce11) {
     finalSum = sumAce11;
   }
   return finalSum;
+};
+
+var getBlackJackImage = function () {
+  var image =
+    '<img src="https://i.pinimg.com/originals/6f/7a/43/6f7a43afaa6992391e51b7798881c845.png"/>';
+  return image;
+};
+
+var getYouWinImage = function () {
+  var image =
+    '<img src="https://media.istockphoto.com/vectors/you-win-message-comic-speech-bubble-effects-in-pop-art-style-vector-id1249638308?k=20&m=1249638308&s=170667a&w=0&h=SPxO-C5UNyahFlfcopJEulCFIpXERSQqoUo1XX5nCAg="/>';
+  return image;
+};
+
+var getYouLoseImage = function () {
+  var image =
+    '<img src ="https://png.pngitem.com/pimgs/s/208-2086644_you-lost-transparent-hd-png-download.png"/>';
+  return image;
+};
+
+var getYouDrawImage = function () {
+  var image =
+    '<img src ="https://www.roomrecess.com/mobile/EggHeads/img/tieGame.png"/>';
+  return image;
 };
 
 // if player or computer gets blackjack, game ends.
@@ -188,10 +192,10 @@ var main = function (input) {
     var playerCard2 = dealOneCard(deck);
     var comCard2 = dealOneCard(deck);
 
-    // playerCard1 = { name: "ace", suits: "diamonds", rank: 1 };
-    // playerCard2 = { name: "jack", suits: "diamonds", rank: 10 };
-    // comCard1 = { name: "7", suits: "diamonds", rank: 7 };
-    // comCard2 = { name: "queen", suits: "diamonds", rank: 10 };
+    playerCard1 = { name: "8", suits: "diamonds", rank: 8 };
+    playerCard2 = { name: "10", suits: "diamonds", rank: 10 };
+    comCard1 = { name: "8", suits: "diamonds", rank: 8 };
+    comCard2 = { name: "queen", suits: "diamonds", rank: 10 };
 
     playerCards.push(playerCard1, playerCard2);
     comCards.push(comCard1, comCard2);
@@ -233,9 +237,11 @@ var main = function (input) {
       return myOutputValue;
     } else if (playerBlackjack == true && comBlackjack == false) {
       gameMode = DEALCARDS;
+      var blackjackImage = getBlackJackImage();
       myOutputValue = `Hello there! <br>
         ${playerDrawnCards}
         Blackjack! You win!<br>
+        ${blackjackImage}
       Click on 'submit' to play another round.`;
       return myOutputValue;
     } else if (comBlackjack == true && playerBlackjack == false) {
@@ -255,7 +261,7 @@ var main = function (input) {
   } else if (gameMode == PLAYERTURN) {
     if (input == `hit`) {
       var playerCard3 = dealOneCard(deck);
-      // playerCard3 = { name: "ace", suits: "diamonds", rank: 1 };
+      // playerCard3 = { name: "10", suits: "diamonds", rank: 10 };
       playerCards.push(playerCard3);
       playerSumAce01 = calculateSumAce01(playerCards);
       var playerCardsAceCheck = checkForAce(playerCards);
@@ -293,16 +299,15 @@ var main = function (input) {
       }
     }
   } else if (gameMode == COMTURN) {
-    if (
-      (comSumAce01 < 17 && comSumAce11 < 17) ||
-      (comSumAce01 < 17 && comSumAce11 > 17)
-    ) {
+    if (comSumAce01 < 17 && comSumAce11 < 17) {
       var comCard3 = dealOneCard(deck);
+      // comCard3 = { name: "9", suits: "diamonds", rank: 9 };
       comCards.push(comCard3);
       comSumAce01 = calculateSumAce01(comCards);
       var comCardsAceCheck = checkForAce(comCards);
 
-      comDrawnCards = comDrawnCards + `${comCard3.name} of ${comCard3.suits}`;
+      comDrawnCards =
+        comDrawnCards + `${comCards[2].name} of ${comCards[2].suits}`;
       myOutputValue = `The computer has drawn a third card: <br><br> 
       ${comCard3.name} of ${comCard3.suits}<br><br>
       The total sum of the computer's cards is ${comSumAce01} <br>
@@ -316,38 +321,52 @@ var main = function (input) {
       The total sum of the computer's cards is ${comSumAce01} or ${comSumAce11} <br>
       Please click 'submit' for the computer to decide whether to 'hit' or 'stand'`;
       }
-    } else if ((comSumAce01 <= 17 && comSumAce11 > 17) || comSumAce01 >= 17) {
+    } else {
       gameMode = DETERMINEWINNER;
       myOutputValue = `The computer stands. Please click 'submit' again to view the results.`;
     }
   } else if (gameMode == DETERMINEWINNER) {
+    playerSumAce11 = calculateSumAce11(playerCards);
+    comSumAce11 = calculateSumAce11(comCards);
     playerFinalSum = determineFinalSum(playerSumAce01, playerSumAce11);
     comFinalSum = determineFinalSum(comSumAce01, comSumAce11);
+    var youWin = getYouWinImage();
+    var youLost = getYouLoseImage();
+    var youDraw = getYouDrawImage();
 
     if (comFinalSum > 21 && playerFinalSum > 21) {
-      myOutputValue = `Draw!<br><br>
-      ${playerDrawnCards} ${comDrawnCards}
+      myOutputValue = `Draw!<br>
+      ${youDraw}<br><br>
+      ${playerDrawnCards} <br>
+      ${comDrawnCards}<br><Br>
       Both of you busted!`;
     } else if (comFinalSum > 21) {
-      myOutputValue = `The computer busted!<br><br>
-      ${playerDrawnCards} ${comDrawnCards}`;
+      myOutputValue = `The computer busted!<br>
+      ${youWin}<br><br>
+      ${playerDrawnCards} <br>
+      ${comDrawnCards}`;
     } else if (playerFinalSum > 21) {
-      myOutputValue = `You busted!<br><br>
-       ${playerDrawnCards} ${comDrawnCards}`;
+      myOutputValue = `You busted!<br>
+      ${youLost}<br><br>
+       ${playerDrawnCards} <br>
+       ${comDrawnCards}`;
     } else if (comFinalSum < playerFinalSum) {
-      myOutputValue = `You win!<br><br>
+      myOutputValue = `You win!<br>
+      ${youWin}<br><br>
        ${playerDrawnCards}
       Your total sum is ${playerFinalSum}<br><br>
       ${comDrawnCards}
       Its total sum is ${comFinalSum}`;
     } else if (comFinalSum > playerFinalSum) {
-      myOutputValue = `The computer wins!<br><br>
+      myOutputValue = `The computer wins!<br>
+      ${youLost}<br><br>
        ${playerDrawnCards}
       Your total sum is ${playerFinalSum}<br><br>
       ${comDrawnCards}
       Its total sum is ${comFinalSum}`;
     } else if (comFinalSum == playerFinalSum) {
       myOutputValue = `Draw!<br>
+      ${youDraw}<br><br>
       ${playerDrawnCards} <br> ${comDrawnCards}
       Both the computer and you have drawn ${playerFinalSum}!<br><br>
       Click 'submit' to start playing another round of blackjack.`;
