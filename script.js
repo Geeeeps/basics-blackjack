@@ -17,15 +17,19 @@
 //   - If sum of com cards > sum of player cards, com wins
 
 var deck = [];
+var mixedDeck = [];
 var suits = ["diamonds", "clubs", "hearts", "spades"];
 var cardName = "";
 var cardRank = 0;
 var counter = 0;
 var randomNum = 0;
-var gameMode = "dealCards";
-var DEALCARDS = "dealCards";
+var gameMode = "shuffle deck";
+var SHUFFLEDECK = "shuffle deck";
+var DEALCARDS = "deal cards";
 var DETERMINEPLAYERACE = "determine ace";
 var PLAYERTURN = "player turn";
+var PLAYERHIT = "player hit";
+var PLAYERSTAND = "player stand";
 var COMTURN = "com turn";
 var DETERMINEWINNER = "determine winner";
 var playerCards = [];
@@ -39,6 +43,8 @@ var playerSumAce11 = 0;
 var playerFinalSum = 0;
 var playerDrawnCards = "";
 var comDrawnCards = "";
+var submitButton = document.querySelector("#submit-button");
+var standButton = "";
 
 var makeDeck = function () {
   var counter = 0;
@@ -156,6 +162,27 @@ var determineFinalSum = function (sumAce01, sumAce11) {
   return finalSum;
 };
 
+var endTurn = function () {
+  gameMode = PLAYERSTAND;
+  var input = document.querySelector("#input-field");
+  var result = main(input.value);
+  var output = document.querySelector("#output-div");
+  output.innerHTML = result;
+  input.value = "";
+  return gameMode;
+};
+
+var insertAfter = function (newButton, currentButton) {
+  currentButton.parentNode.insertBefore(newButton, currentButton.nextSibling);
+};
+
+var createButton = function () {
+  var newButton = document.createElement("button");
+  newButton.innerText = "Stand";
+  newButton.addEventListener("click", endTurn);
+  insertAfter(newButton, submitButton);
+};
+
 var getBlackJackImage = function () {
   var image =
     '<img src="https://i.pinimg.com/originals/6f/7a/43/6f7a43afaa6992391e51b7798881c845.png"/>';
@@ -184,18 +211,22 @@ var getYouDrawImage = function () {
 // else if player choose to hit or stand
 var main = function (input) {
   var myOutputValue = "";
-
-  if (gameMode == DEALCARDS) {
-    var mixedDeck = shuffleDeck(deck);
+  if (gameMode == SHUFFLEDECK) {
+    mixedDeck = [];
+    mixedDeck = shuffleDeck(deck);
+    submitButton.innerText = "deal cards";
+    gameMode = PLAYERTURN;
+    myOutputValue = "Please click on 'deal cards' to get your cards!";
+  } else if (gameMode == PLAYERTURN) {
     var playerCard1 = dealOneCard(deck);
     var comCard1 = dealOneCard(deck);
     var playerCard2 = dealOneCard(deck);
     var comCard2 = dealOneCard(deck);
 
-    playerCard1 = { name: "8", suits: "diamonds", rank: 8 };
-    playerCard2 = { name: "10", suits: "diamonds", rank: 10 };
-    comCard1 = { name: "8", suits: "diamonds", rank: 8 };
-    comCard2 = { name: "queen", suits: "diamonds", rank: 10 };
+    // playerCard1 = { name: "8", suits: "diamonds", rank: 8 };
+    // playerCard2 = { name: "10", suits: "diamonds", rank: 10 };
+    // comCard1 = { name: "8", suits: "diamonds", rank: 8 };
+    // comCard2 = { name: "queen", suits: "diamonds", rank: 10 };
 
     playerCards.push(playerCard1, playerCard2);
     comCards.push(comCard1, comCard2);
@@ -213,7 +244,10 @@ var main = function (input) {
     console.log("Computer card 1 " + comCards[0].name + comCards[0].suits);
     console.log("Computer card 2 " + comCards[1].name + comCards[1].suits);
 
-    gameMode = PLAYERTURN;
+    gameMode = PLAYERHIT;
+
+    submitButton.innerText = "Hit";
+    standButton = createButton();
 
     playerDrawnCards = `You have drawn: <br>
       Card 1: ${playerCards[0].name} of ${playerCards[0].suits} <br>
@@ -225,31 +259,35 @@ var main = function (input) {
     myOutputValue = `Hello there!
       ${playerDrawnCards}<br>
       The total sum of your cards is ${playerSumAce01} <br>
-      Please enter 'hit' to draw a card or 'stand' to end your turn`;
+      Please click 'hit' to draw a card or 'stand' to end your turn`;
 
+    //CHECK FOR BLACKJACK
     if (playerBlackjack == true && comBlackjack == true) {
-      gameMode = DEALCARDS;
+      submitButton.innerText = "Next";
+      gameMode = SHUFFLEDECK;
       myOutputValue =
         playerDrawnCards +
         comDrawnCards +
         `It's a draw! Both the computer and you have drawn Blackjack!<br> 
-      Click on 'submit' to play another round.`;
+      Click on 'Next' to play another round.`;
       return myOutputValue;
     } else if (playerBlackjack == true && comBlackjack == false) {
-      gameMode = DEALCARDS;
+      submitButton.innerText = "Next";
+      gameMode = SHUFFLEDECK;
       var blackjackImage = getBlackJackImage();
       myOutputValue = `Hello there! <br>
         ${playerDrawnCards}
         Blackjack! You win!<br>
         ${blackjackImage}
-      Click on 'submit' to play another round.`;
+      Click on 'Next' to play another round.`;
       return myOutputValue;
     } else if (comBlackjack == true && playerBlackjack == false) {
-      gameMode = DEALCARDS;
+      submitButton.innerText = "Next";
+      gameMode = SHUFFLEDECK;
       myOutputValue = `Hello there! <br>
         ${comDrawnCards}
       You lost! Computer got Blackjack!<br> 
-      Click on 'submit' to play another round.`;
+      Click on 'Next' to play another round.`;
       return myOutputValue;
     } else if (playerCardsAceCheck == true) {
       playerSumAce11 = calculateSumAce11(playerCards);
@@ -258,45 +296,44 @@ var main = function (input) {
       The total sum of your cards is ${playerSumAce01} or ${playerSumAce11}<br>
       Please enter 'hit' to draw a card or 'stand' to end your turn`;
     }
-  } else if (gameMode == PLAYERTURN) {
-    if (input == `hit`) {
-      var playerCard3 = dealOneCard(deck);
-      // playerCard3 = { name: "10", suits: "diamonds", rank: 10 };
-      playerCards.push(playerCard3);
-      playerSumAce01 = calculateSumAce01(playerCards);
-      var playerCardsAceCheck = checkForAce(playerCards);
-      console.log("playerSumAce01 " + playerSumAce01);
-      console.log("playerSumAce11 " + playerSumAce11);
-      playerDrawnCards =
-        playerDrawnCards +
-        `Card 3: ${playerCard3.name} of ${playerCard3.suits}<br>`;
-      myOutputValue = `Your third card is:<br>
+  } else if (gameMode == PLAYERHIT) {
+    var playerCard3 = dealOneCard(deck);
+    // playerCard3 = { name: "10", suits: "diamonds", rank: 10 };
+    playerCards.push(playerCard3);
+    playerSumAce01 = calculateSumAce01(playerCards);
+    var playerCardsAceCheck = checkForAce(playerCards);
+    console.log("playerSumAce01 " + playerSumAce01);
+    console.log("playerSumAce11 " + playerSumAce11);
+    playerDrawnCards =
+      playerDrawnCards +
+      `Card 3: ${playerCard3.name} of ${playerCard3.suits}<br>`;
+    myOutputValue = `Your third card is:<br>
       ${playerCard3.name} of ${playerCard3.suits}<br><br> ${playerDrawnCards} <br>
       The total sum of your cards is ${playerSumAce01}. <br><br>
-      Please enter 'hit' to draw another card or 'stand' to end your turn.`;
+      Please click 'hit' to draw another card or 'stand' to end your turn.`;
 
-      if (playerCardsAceCheck == true) {
-        playerSumAce11 = calculateSumAce11(playerCards);
-        myOutputValue = `${playerDrawnCards} <br>
+    if (playerCardsAceCheck == true) {
+      playerSumAce11 = calculateSumAce11(playerCards);
+      myOutputValue = `${playerDrawnCards} <br>
       The total sum of your cards is ${playerSumAce01} or ${playerSumAce11}<br><br>
-      Please enter 'hit' to draw a card or 'stand' to end your turn`;
-      }
-    } else if (input == `stand`) {
-      gameMode = COMTURN;
-      comSumAce01 = calculateSumAce01(comCards);
-      var comCardsAceCheck = checkForAce(comCards);
-      console.log("comSum " + comSumAce01);
-      myOutputValue = `${playerDrawnCards}<br>
+      Please click 'hit' to draw a card or 'stand' to end your turn`;
+    }
+  } else if (gameMode == PLAYERSTAND) {
+    submitButton.innerText = "Next";
+    gameMode = COMTURN;
+    comSumAce01 = calculateSumAce01(comCards);
+    var comCardsAceCheck = checkForAce(comCards);
+    console.log("comSum " + comSumAce01);
+    myOutputValue = `${playerDrawnCards}<br>
       ${comDrawnCards} <br>
       The total sum of the computer's cards is ${comSumAce01}. <br><br>
-      Please click 'submit' for the computer to decide whether to 'hit' or 'stand'`;
+      Please click 'Next' for the computer to decide whether to 'hit' or 'stand'`;
 
-      if (comCardsAceCheck == true) {
-        comSumAce11 = calculateSumAce11(comCards);
-        myOutputValue = `${playerDrawnCards}<br>
+    if (comCardsAceCheck == true) {
+      comSumAce11 = calculateSumAce11(comCards);
+      myOutputValue = `${playerDrawnCards}<br>
         The total sum of the computer's cards is ${comSumAce01} or ${comSumAce11}. <br><br>
-      Please click 'submit' and the computer will decide whether to 'hit' or 'stand'`;
-      }
+      Please click 'Next' and the computer will decide whether to 'hit' or 'stand'`;
     }
   } else if (gameMode == COMTURN) {
     if (comSumAce01 < 17 && comSumAce11 < 17) {
@@ -311,7 +348,7 @@ var main = function (input) {
       myOutputValue = `The computer has drawn a third card: <br><br> 
       ${comCard3.name} of ${comCard3.suits}<br><br>
       The total sum of the computer's cards is ${comSumAce01} <br>
-      Please click 'submit' for the computer to decide whether to 'hit' or 'stand'`;
+      Please click 'Next' for the computer to decide whether to 'hit' or 'stand'`;
 
       if (comCardsAceCheck == true) {
         comSumAce11 = calculateSumAce11(comCards);
@@ -319,11 +356,11 @@ var main = function (input) {
       ${comCard3.name} of ${comCard3.suits}<br><br>
       ${comDrawnCards}<br>
       The total sum of the computer's cards is ${comSumAce01} or ${comSumAce11} <br>
-      Please click 'submit' for the computer to decide whether to 'hit' or 'stand'`;
+      Please click 'Next' for the computer to decide whether to 'hit' or 'stand'`;
       }
     } else {
       gameMode = DETERMINEWINNER;
-      myOutputValue = `The computer stands. Please click 'submit' again to view the results.`;
+      myOutputValue = `The computer stands. Please click 'Next' again to view the results.`;
     }
   } else if (gameMode == DETERMINEWINNER) {
     playerSumAce11 = calculateSumAce11(playerCards);
@@ -369,9 +406,9 @@ var main = function (input) {
       ${youDraw}<br><br>
       ${playerDrawnCards} <br> ${comDrawnCards}
       Both the computer and you have drawn ${playerFinalSum}!<br><br>
-      Click 'submit' to start playing another round of blackjack.`;
+      Click 'Next' to start playing another round of blackjack.`;
     }
-    gameMode = DEALCARDS;
+    gameMode = SHUFFLEDECK;
   }
 
   return myOutputValue;
